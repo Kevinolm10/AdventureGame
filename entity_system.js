@@ -1,43 +1,35 @@
 import { myGameArea } from "./index.js";
 
-class Sprite {
-    constructor(x, y, width, height, color) {
+// Base class for all game entities
+class Entity {
+    constructor(x, y, width, height, imagePath) {
         this.x = x;
         this.y = y;
-        this.velocityX = 0;
-        this.velocityY = 0;
-        this.gravity = 0.3;
-        this.gravitySpeed = 0;
-        this.groundY = y;
-        this.isJumping = false;
-        this.isRunning = false;
         this.width = width;
         this.height = height;
-        this.color = color;
-        this.isColliding = false; // Flag to track collision state
-        this.isHostile = false;
         this.health = 100;
+        this.isColliding = false;
+        
+        // Animation properties
         this.hFrame = 0;
         this.vFrame = 0;
         this.hFrameCount = 0;
         this.vFrameCount = 0;
-        this.hFrameMax = 0;
-        this.vFrameMax = 0;
+        this.hFrameMax = 1;
+        this.vFrameMax = 1;
+        
+        // Image handling
         this.image = null;
         this.isImage = false;
-        
-        
-        // Handle image loading
-        if (color.startsWith('./') || color.startsWith('http')) {
+        if (imagePath && (imagePath.startsWith('./') || imagePath.startsWith('http'))) {
             this.image = new Image();
-            this.image.src = color;
+            this.image.src = imagePath;
             this.isImage = true;
-        } else {
-            this.isImage = false;
         }
     }
+
     update() {
-        // handle rendering of specific frames from a sprite sheet
+        // Base update logic - animation frames
         if (this.isImage && this.image.complete) {
             if (this.hFrameCount >= this.hFrameMax) {
                 this.hFrameCount = 0;
@@ -47,21 +39,52 @@ class Sprite {
                 }
             }
         }
+    }
+
+    render(context) {
         if (this.isImage && this.image.complete) {
-            if (this.vFrameCount >= this.vFrameMax) {
-                this.vFrameCount = 0;
-                this.vFrame++;
-                if (this.vFrame >= this.vFrameMax) {
-                    this.vFrame = 0;
-                }
-            }
+            context.drawImage(this.image, 
+                this.hFrame * this.width, this.vFrame * this.height, 
+                this.width, this.height, 
+                this.x, this.y, this.width, this.height);
+        } else {
+            context.fillStyle = this.color || '#ff0000';
+            context.fillRect(this.x, this.y, this.width, this.height);
         }
-        if (this.isImage && this.image.complete) {
-            this.render(myGameArea.context);
-        }
+    }
+
+    takeDamage(amount) {
+        this.health -= amount;
+        return this.health <= 0;
+    }
+
+    checkCollision(other) {
+        return (
+            this.x < other.x + other.width &&
+            this.x + this.width > other.x &&
+            this.y < other.y + other.height &&
+            this.y + this.height > other.y
+        );
+    }
+}
+
+// Player character class
+class Player extends Entity {
+    constructor(x, y, width, height, imagePath) {
+        super(x, y, width, height, imagePath);
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.gravity = 0.3;
+        this.gravitySpeed = 0;
+        this.groundY = y;
+        this.isJumping = false;
+        this.isHostile = false;
+    }
+
+    update() {
+        super.update(); // Call base animation logic
         
-
-
+        // Player-specific physics
         if (this.isJumping) {
             this.gravitySpeed += this.gravity;
             this.y += this.gravitySpeed;
@@ -76,32 +99,55 @@ class Sprite {
         this.x += this.velocityX;
         this.y += this.velocityY;
     }
-    render(context) {
-        if (this.isImage && this.image.complete) {
-            context.drawImage(this.image, this.hFrame * this.width, this.vFrame * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
-        } else {
-            context.fillStyle = this.color;
-            context.fillRect(this.x, this.y, this.width, this.height);
-        }
+}
+
+// Enemy base class
+class Enemy extends Entity {
+    constructor(x, y, width, height, imagePath) {
+        super(x, y, width, height, imagePath);
+        this.isHostile = true;
+        this.velocityX = 0;
+        this.velocityY = 0;
     }
 
-    checkCollision(other) {
-        return (
-            this.x < other.x + other.width &&
-            this.x + this.width > other.x &&
-            this.y < other.y + other.height &&
-            this.y + this.height > other.y
-        );
+    update() {
+        super.update();
+        // Enemy AI logic goes here
+        this.x += this.velocityX;
+        this.y += this.velocityY;
+    }
+}
+
+// Keep Sprite for backward compatibility (now extends Entity)
+class Sprite extends Entity {
+    constructor(x, y, width, height, color) {
+        super(x, y, width, height, color);
+        this.velocityX = 0;
+        this.velocityY = 0;
+        this.gravity = 0.3;
+        this.gravitySpeed = 0;
+        this.groundY = y;
+        this.isJumping = false;
+        this.isHostile = false;
+        this.color = color;
     }
 
-    takeDamage(amount) {
-        this.health -= amount;
-        console.log(`${this.color} took ${amount} damage. Health: ${this.health}`);
-        if (this.health <= 0) {
-            console.log(`${this.color} has been defeated!`);
-            return true; // Return true to indicate Sprite should be removed
+    update() {
+        super.update();
+        
+        if (this.isJumping) {
+            this.gravitySpeed += this.gravity;
+            this.y += this.gravitySpeed;
+
+            if (this.y > this.groundY) {
+                this.y = this.groundY;
+                this.gravitySpeed = 0;
+                this.isJumping = false;
+            }
         }
-        return false;
+
+        this.x += this.velocityX;
+        this.y += this.velocityY;
     }
 }
 
@@ -191,4 +237,4 @@ class SpriteManager {
 
 const spriteManager = new SpriteManager();
 
-export { Sprite, SpriteManager, spriteManager };
+export { Entity, Player, Enemy, Sprite, SpriteManager, spriteManager };
