@@ -17,12 +17,16 @@ class Entity {
         this.vFrameCount = 0;
         this.hFrameMax = 1;
         this.vFrameMax = 1;
+        this.frameWidth = width;
+        this.frameHeight = height;
         
         // Image handling
         this.image = null;
         this.isImage = false;
         if (imagePath && (imagePath.startsWith('./') || imagePath.startsWith('http'))) {
             this.image = new Image();
+            this.image.onload = () => console.log(`Image loaded: ${imagePath}`);
+            this.image.onerror = () => console.error(`Failed to load image: ${imagePath}`);
             this.image.src = imagePath;
             this.isImage = true;
         }
@@ -31,7 +35,8 @@ class Entity {
     update() {
         // Base update logic - animation frames
         if (this.isImage && this.image.complete) {
-            if (this.hFrameCount >= this.hFrameMax) {
+            this.hFrameCount++;
+            if (this.hFrameCount >= 15) { 
                 this.hFrameCount = 0;
                 this.hFrame++;
                 if (this.hFrame >= this.hFrameMax) {
@@ -41,17 +46,16 @@ class Entity {
         }
     }
 
-    render(context) {
-        if (this.isImage && this.image.complete) {
-            context.drawImage(this.image, 
-                this.hFrame * this.width, this.vFrame * this.height, 
-                this.width, this.height, 
-                this.x, this.y, this.width, this.height);
-        } else {
-            context.fillStyle = this.color || '#ff0000';
-            context.fillRect(this.x, this.y, this.width, this.height);
-        }
+render(context) {
+    if (this.isImage && this.image.complete) {
+        context.drawImage(this.image,
+            this.hFrame * this.frameWidth, this.vFrame * this.frameHeight,
+            this.frameWidth, this.frameHeight,
+            this.x, this.y, this.width, this.height);
+    } else {
+        context.fillRect(this.x, this.y, this.width, this.height);
     }
+}
 
     takeDamage(amount) {
         this.health -= amount;
