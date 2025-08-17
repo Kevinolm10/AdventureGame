@@ -1,4 +1,4 @@
-import { Sprite, SpriteManager, spriteManager } from "./entity_system.js";
+import { Player, Enemy, spriteManager } from "./entity_system.js";
 import { movement } from "./player_controller.js";
 
 let myGameArea = {
@@ -56,6 +56,7 @@ function updateSpeed() {
 
     if (keys["a"] || keys["ArrowLeft"])
         intendedVelocityX = -2 * runMultiplier;
+        
     if (keys["d"] || keys["ArrowRight"])
         intendedVelocityX = 2 * runMultiplier;
     if (keys["w"] || keys["ArrowUp"])
@@ -105,12 +106,15 @@ function updateSpeed() {
 }
 
 function spawnSprites() {
-    mainCharacter = new Sprite(100, 100, 50, 50, "./assets/enteties/idle/idle_down-Sheet.png");
+    mainCharacter = new Player(100, 100, 50, 50, "./assets/enteties/idle/idle_down-Sheet.png");
     mainCharacter.hFrameMax = 4;
     mainCharacter.vFrameMax = 1;
 
+    // Example enemy
+    greenGoblin = new Enemy(200, 200, 50, 50, "./assets/enemies/goblin.png");
 
     spriteManager.addSprite(mainCharacter);
+    spriteManager.addSprite(greenGoblin);
 }
 
 function startMenu() {
