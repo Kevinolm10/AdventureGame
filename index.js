@@ -1,5 +1,20 @@
 import { Player, Enemy, spriteManager } from "./entity_system.js";
 import { movement } from "./player_controller.js";
+import { resources } from "./resources.js";
+// Remove the import and load it differently
+
+
+function initializeResources() {
+    // Access the tilemap data from the global TileMaps object
+    const IslandmapData = window.TileMaps ? window.TileMaps["Islandmap"] : null;
+    
+    if (IslandmapData) {
+        resources.loadTilemap("Islandmap", IslandmapData);
+        resources.loadTileset("Water_tiles", "./assets/tilesets/Water_tiles.png", 16, 16);
+        resources.loadTileset("Size_02", "./assets/tilesets/Size_02.png", 16, 16);
+        resources.loadTileset("Rocks", "./assets/tilesets/Rocks.png", 16, 16);
+    }
+}
 
 let myGameArea = {
     canvas: document.createElement("canvas"),
@@ -22,18 +37,23 @@ let greenGoblin;
 let keys;
 
 function update() {
-    // Only continue if game is running
     if (!gameRunning) return;
 
     myGameArea.context.clearRect(0, 0, myGameArea.canvas.width, myGameArea.canvas.height);
 
+    // Draw tilemap layers BEFORE sprites
+    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "Tile Layer 1", 0, 0);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "water", 0, 0);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "rocks", 0, 0);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "firr", 0, 0);
+
     // Check if player is dead
     if (mainCharacter && mainCharacter.health <= 0) {
-        endGame(false); // Player lost
+        endGame(false);
         return;
     }
 
-    // Update player movement based on keys
+    // Update player movement
     if (mainCharacter && keys) {
         updateSpeed();
     }
@@ -54,15 +74,57 @@ function updateSpeed() {
     let intendedVelocityX = 0;
     let intendedVelocityY = 0;
 
-    if (keys["a"] || keys["ArrowLeft"])
+    if (keys["a"] || keys["ArrowLeft"]) {
         intendedVelocityX = -2 * runMultiplier;
-        
-    if (keys["d"] || keys["ArrowRight"])
+        if (!mainCharacter.image.src.includes("Walk_Side-Sheet.png")) {
+            mainCharacter.image.src = "./assets/enteties/walk/Walk_Left-Sheet.png";
+            mainCharacter.hFrameMax = 6;
+            mainCharacter.vFrameMax = 1;
+            mainCharacter.frameWidth = 64;
+            mainCharacter.frameHeight = 64;
+        }
+    }
+    if (keys["d"] || keys["ArrowRight"]) {
         intendedVelocityX = 2 * runMultiplier;
-    if (keys["w"] || keys["ArrowUp"])
+        if (!mainCharacter.image.src.includes("Walk_Side-Sheet.png")) {
+            mainCharacter.image.src = "./assets/enteties/walk/Walk_Right-Sheet.png";
+            mainCharacter.hFrameMax = 6;
+            mainCharacter.vFrameMax = 1;
+            mainCharacter.frameWidth = 64;
+            mainCharacter.frameHeight = 64;
+        }
+    }
+    if (keys["w"] || keys["ArrowUp"]) {
         intendedVelocityY = -2 * runMultiplier;
-    if (keys["s"] || keys["ArrowDown"])
+        if (!mainCharacter.image.src.includes("Walk_Up-Sheet.png")) {
+            mainCharacter.image.src = "./assets/enteties/walk/Walk_Up-Sheet.png";
+            mainCharacter.hFrameMax = 6;
+            mainCharacter.vFrameMax = 1;
+            mainCharacter.frameWidth = 64;
+            mainCharacter.frameHeight = 64;
+        }
+    }
+    if (keys["s"] || keys["ArrowDown"]) {
         intendedVelocityY = 2 * runMultiplier;
+        if (!mainCharacter.image.src.includes("Walk_Down-Sheet.png")) {
+            mainCharacter.image.src = "./assets/enteties/walk/Walk_Down-Sheet.png";
+            mainCharacter.hFrameMax = 6;
+            mainCharacter.vFrameMax = 1;
+            mainCharacter.frameWidth = 64;
+            mainCharacter.frameHeight = 64;
+        }
+    }
+
+    // Set idle animation when not moving
+    if (intendedVelocityX === 0 && intendedVelocityY === 0) {
+        if (!mainCharacter.image.src.includes("idle_down-Sheet.png")) {
+            mainCharacter.image.src = "./assets/enteties/idle/idle_down-Sheet.png";
+            mainCharacter.hFrameMax = 4;
+            mainCharacter.vFrameMax = 1;
+            mainCharacter.frameWidth = 64;
+            mainCharacter.frameHeight = 64;
+        }
+    }
 
     // If colliding, only allow movement that would separate from ALL colliding sprites
     if (mainCharacter.isColliding) {
@@ -109,9 +171,15 @@ function spawnSprites() {
     mainCharacter = new Player(100, 100, 50, 50, "./assets/enteties/idle/idle_down-Sheet.png");
     mainCharacter.hFrameMax = 4;
     mainCharacter.vFrameMax = 1;
+    mainCharacter.frameWidth = 64;
+    mainCharacter.frameHeight = 64;
 
     // Example enemy
-    greenGoblin = new Enemy(200, 200, 50, 50, "./assets/enemies/goblin.png");
+    greenGoblin = new Enemy(200, 200, 32, 32, "./assets/enteties/enemies/skeleton-idle/Idle-Sheet.png");
+    greenGoblin.hFrameMax = 4;
+    greenGoblin.vFrameMax = 1;
+    greenGoblin.frameWidth = 32;
+    greenGoblin.frameHeight = 32;
 
     spriteManager.addSprite(mainCharacter);
     spriteManager.addSprite(greenGoblin);
@@ -236,6 +304,7 @@ function restartGame() {
 function startGame() {
     gameRunning = true; // Start the game loop
     myGameArea.start();
+    initializeResources(); // Initialize resources when game starts
     keys = movement(); // Get the keys object from movement function
     spawnSprites();
     update();
