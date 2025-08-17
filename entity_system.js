@@ -17,8 +17,51 @@ class Sprite {
         this.isColliding = false; // Flag to track collision state
         this.isHostile = false;
         this.health = 100;
+        this.hFrame = 0;
+        this.vFrame = 0;
+        this.hFrameCount = 0;
+        this.vFrameCount = 0;
+        this.hFrameMax = 0;
+        this.vFrameMax = 0;
+        this.image = null;
+        this.isImage = false;
+        
+        
+        // Handle image loading
+        if (color.startsWith('./') || color.startsWith('http')) {
+            this.image = new Image();
+            this.image.src = color;
+            this.isImage = true;
+        } else {
+            this.isImage = false;
+        }
     }
     update() {
+        // handle rendering of specific frames from a sprite sheet
+        if (this.isImage && this.image.complete) {
+            if (this.hFrameCount >= this.hFrameMax) {
+                this.hFrameCount = 0;
+                this.hFrame++;
+                if (this.hFrame >= this.hFrameMax) {
+                    this.hFrame = 0;
+                }
+            }
+        }
+        if (this.isImage && this.image.complete) {
+            if (this.vFrameCount >= this.vFrameMax) {
+                this.vFrameCount = 0;
+                this.vFrame++;
+                if (this.vFrame >= this.vFrameMax) {
+                    this.vFrame = 0;
+                }
+            }
+        }
+        if (this.isImage && this.image.complete) {
+            this.render(myGameArea.context);
+        }
+        
+
+
         if (this.isJumping) {
             this.gravitySpeed += this.gravity;
             this.y += this.gravitySpeed;
@@ -34,8 +77,12 @@ class Sprite {
         this.y += this.velocityY;
     }
     render(context) {
-        context.fillStyle = this.color;
-        context.fillRect(this.x, this.y, this.width, this.height);
+        if (this.isImage && this.image.complete) {
+            context.drawImage(this.image, this.hFrame * this.width, this.vFrame * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
+        } else {
+            context.fillStyle = this.color;
+            context.fillRect(this.x, this.y, this.width, this.height);
+        }
     }
 
     checkCollision(other) {
