@@ -105,14 +105,12 @@ function updateSpeed() {
 }
 
 function spawnSprites() {
-    mainCharacter = new Sprite(100, 100, 50, 50, "red");
-    greenGoblin = new Sprite(200, 200, 50, 50, "green");
+    mainCharacter = new Sprite(100, 100, 50, 50, "./assets/enteties/idle/idle_down-Sheet.png");
+    mainCharacter.hFrameMax = 4;
+    mainCharacter.vFrameMax = 1;
 
-    // Mark the green goblin as hostile so it can deal damage
-    greenGoblin.isHostile = true;
 
     spriteManager.addSprite(mainCharacter);
-    spriteManager.addSprite(greenGoblin);
 }
 
 function startMenu() {
