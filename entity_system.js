@@ -52,9 +52,8 @@ render(context) {
             this.hFrame * this.frameWidth, this.vFrame * this.frameHeight,
             this.frameWidth, this.frameHeight,
             this.x, this.y, this.width, this.height);
-    } else {
-        context.fillRect(this.x, this.y, this.width, this.height);
     }
+    // Remove the fallback rectangle - don't draw anything if image isn't loaded
 }
 
     takeDamage(amount) {

@@ -4,25 +4,47 @@ import { resources } from "./resources.js";
 // Remove the import and load it differently
 
 
-function initializeResources() {
-    // Access the tilemap data from the global TileMaps object
-    const IslandmapData = window.TileMaps ? window.TileMaps["Islandmap"] : null;
-    
-    if (IslandmapData) {
-        resources.loadTilemap("Islandmap", IslandmapData);
-        resources.loadTileset("Water_tiles", "./assets/tilesets/Water_tiles.png", 16, 16);
-        resources.loadTileset("Size_02", "./assets/tilesets/Size_02.png", 16, 16);
-        resources.loadTileset("Rocks", "./assets/tilesets/Rocks.png", 16, 16);
+async function initializeResources() {
+    try {
+        console.log("Attempting to fetch tilemap...");
+        const response = await fetch('./assets/map/Islandmpz..tmj');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const IslandmapData = await response.json();
+        
+        resources.loadTilemap("Islandmpz", IslandmapData);
+        console.log("Tilemap loaded successfully:", IslandmapData);
+        
+        // Load tilesets with correct tile sizes based on image dimensions
+        await Promise.all([
+            resources.loadTileset("Water_tiles", "./assets/Tilesets/Water_tiles.png", 16, 16),
+            resources.loadTileset("Size_02", "./assets/props/Props/Static/Trees/Model_01/Size_02.png", 16, 16),
+            resources.loadTileset("Rocks", "./assets/props/Props/Static/Rocks.png", 16, 16),
+            resources.loadTileset("Shadows", "./assets/props/Props/Static/Shadows.png", 16, 16),
+            resources.loadTileset("Bonfire", "./assets/props/Props/Bonfire/Bonfire.png", 16, 24),
+            resources.loadTileset("Fire_02-Sheet", "./assets/props/Props/Bonfire/Fire_02-Sheet.png", 16, 16),
+            resources.loadTileset("Dungeon_Tiles", "./assets/Tilesets/Dungeon_Tiles.png", 16, 16)
+        ]);
+
+        console.log("All tilesets loaded successfully");
+        resources.listTilesets(); // Debug: show loaded tilesets
+        console.log("Tilemap loaded successfully");
+        console.log("Available layers:", IslandmapData.layers.map(l => l.name));
+    } catch (error) {
+        console.error("Failed to load tilemap:", error);
     }
 }
 
 let myGameArea = {
     canvas: document.createElement("canvas"),
+    scale: 3, // Scale factor for everything
     start: function () {
         this.canvas.width = window.innerWidth - 100;
         this.canvas.height = window.innerHeight - 100;
         this.canvas.classList.add("game-canvas");
         this.context = this.canvas.getContext("2d");
+        this.context.imageSmoothingEnabled = false; // Keep pixel art crisp
         document.body.appendChild(this.canvas);
 
         window.addEventListener("resize", () => {
@@ -41,11 +63,17 @@ function update() {
 
     myGameArea.context.clearRect(0, 0, myGameArea.canvas.width, myGameArea.canvas.height);
 
-    // Draw tilemap layers BEFORE sprites
-    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "Tile Layer 1", 0, 0);
-    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "water", 0, 0);
-    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "rocks", 0, 0);
-    resources.drawTilemapLayer(myGameArea.context, "Islandmap", "firr", 0, 0);
+    const scale = myGameArea.scale;
+    // Draw tilemap layers with scale
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "grassEdges + waves", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "grass", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "water", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "tree", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "rocks", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "shadows", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "bonfire", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "bridge", 0, 0, scale);
+    resources.drawTilemapLayer(myGameArea.context, "Islandmpz", "fire", 0, 0, scale);
 
     // Check if player is dead
     if (mainCharacter && mainCharacter.health <= 0) {
@@ -75,7 +103,7 @@ function updateSpeed() {
     let intendedVelocityY = 0;
 
     if (keys["a"] || keys["ArrowLeft"]) {
-        intendedVelocityX = -2 * runMultiplier;
+        intendedVelocityX = -0.5 * runMultiplier;
         if (!mainCharacter.image.src.includes("Walk_Side-Sheet.png")) {
             mainCharacter.image.src = "./assets/enteties/walk/Walk_Left-Sheet.png";
             mainCharacter.hFrameMax = 6;
@@ -85,7 +113,7 @@ function updateSpeed() {
         }
     }
     if (keys["d"] || keys["ArrowRight"]) {
-        intendedVelocityX = 2 * runMultiplier;
+        intendedVelocityX = 0.5 * runMultiplier;
         if (!mainCharacter.image.src.includes("Walk_Side-Sheet.png")) {
             mainCharacter.image.src = "./assets/enteties/walk/Walk_Right-Sheet.png";
             mainCharacter.hFrameMax = 6;
@@ -95,7 +123,7 @@ function updateSpeed() {
         }
     }
     if (keys["w"] || keys["ArrowUp"]) {
-        intendedVelocityY = -2 * runMultiplier;
+        intendedVelocityY = -0.5 * runMultiplier;
         if (!mainCharacter.image.src.includes("Walk_Up-Sheet.png")) {
             mainCharacter.image.src = "./assets/enteties/walk/Walk_Up-Sheet.png";
             mainCharacter.hFrameMax = 6;
@@ -105,7 +133,7 @@ function updateSpeed() {
         }
     }
     if (keys["s"] || keys["ArrowDown"]) {
-        intendedVelocityY = 2 * runMultiplier;
+        intendedVelocityY = 0.5 * runMultiplier;
         if (!mainCharacter.image.src.includes("Walk_Down-Sheet.png")) {
             mainCharacter.image.src = "./assets/enteties/walk/Walk_Down-Sheet.png";
             mainCharacter.hFrameMax = 6;
@@ -126,38 +154,26 @@ function updateSpeed() {
         }
     }
 
-    // If colliding, only allow movement that would separate from ALL colliding sprites
-    if (mainCharacter.isColliding) {
-        let canMoveX = true;
-        let canMoveY = true;
+    // Check tilemap collision before moving
+    const newX = mainCharacter.x + intendedVelocityX;
+    const newY = mainCharacter.y + intendedVelocityY;
 
-        // Check against all sprites to see if movement would separate from them
-        spriteManager.sprites.forEach(sprite => {
-            if (sprite !== mainCharacter && mainCharacter.checkCollision(sprite)) {
-                const deltaX = mainCharacter.x - sprite.x;
-                const deltaY = mainCharacter.y - sprite.y;
-
-                // Block movement that would move closer to this sprite
-                if ((intendedVelocityX > 0 && deltaX <= 0) || (intendedVelocityX < 0 && deltaX >= 0)) {
-                    canMoveX = false;
-                }
-                if ((intendedVelocityY > 0 && deltaY <= 0) || (intendedVelocityY < 0 && deltaY >= 0)) {
-                    canMoveY = false;
-                }
-            }
-        });
-
-        // Only apply movement if it's allowed
+    // Check X movement
+    if (intendedVelocityX !== 0) {
+        const canMoveX = resources.canMoveTo(mainCharacter, newX, mainCharacter.y);
+        console.log(`Can move X from ${mainCharacter.x} to ${newX}:`, canMoveX);
         if (canMoveX) {
             mainCharacter.velocityX = intendedVelocityX;
         }
+    }
+
+    // Check Y movement  
+    if (intendedVelocityY !== 0) {
+        const canMoveY = resources.canMoveTo(mainCharacter, mainCharacter.x, newY);
+        console.log(`Can move Y from ${mainCharacter.y} to ${newY}:`, canMoveY);
         if (canMoveY) {
             mainCharacter.velocityY = intendedVelocityY;
         }
-    } else {
-        // Normal movement when not colliding
-        mainCharacter.velocityX = intendedVelocityX;
-        mainCharacter.velocityY = intendedVelocityY;
     }
 
     if (keys[" "] && !mainCharacter.isJumping) {
@@ -168,14 +184,14 @@ function updateSpeed() {
 }
 
 function spawnSprites() {
-    mainCharacter = new Player(100, 100, 50, 50, "./assets/enteties/idle/idle_down-Sheet.png");
+    const scale = myGameArea.scale;
+    mainCharacter = new Player(130 * scale, 150 * scale, 16 * scale, 16 * scale, "./assets/enteties/idle/idle_down-Sheet.png");
     mainCharacter.hFrameMax = 4;
     mainCharacter.vFrameMax = 1;
     mainCharacter.frameWidth = 64;
     mainCharacter.frameHeight = 64;
 
-    // Example enemy
-    greenGoblin = new Enemy(200, 200, 32, 32, "./assets/enteties/enemies/skeleton-idle/Idle-Sheet.png");
+    greenGoblin = new Enemy(200 * scale, 200 * scale, 16 * scale, 16 * scale, "./assets/enteties/enemies/skeleton-idle/Idle-Sheet.png");
     greenGoblin.hFrameMax = 4;
     greenGoblin.vFrameMax = 1;
     greenGoblin.frameWidth = 32;
@@ -301,11 +317,11 @@ function restartGame() {
     startGame();
 }
 
-function startGame() {
-    gameRunning = true; // Start the game loop
+async function startGame() {
+    gameRunning = true;
     myGameArea.start();
-    initializeResources(); // Initialize resources when game starts
-    keys = movement(); // Get the keys object from movement function
+    await initializeResources(); // Wait for resources to load
+    keys = movement();
     spawnSprites();
     update();
 }
